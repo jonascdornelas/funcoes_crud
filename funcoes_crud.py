@@ -1,89 +1,65 @@
-import sys
+from conexao_mysql import conectar
 import pandas as pd
 
-class Aluno:
-    def __init__(self, nome, cpf):
-        self.nome = nome
-        self.cpf = cpf
+conexao = conectar()
+cursor = conexao.cursor()
 
-class GerenciadorAlunos:
-    def __init__(self):
-        self.alunos = []
+# Script CREATE
+def criar_alunos():
+    nome_aluno = input("Informe seu nome: ")
+    telefone_aluno = input("Informe seu telefone (No formato 83987791174): ")
+    email_aluno = input("Informe seu e-mail: ")
+    sexo_aluno =  input("Informe seu sexo (M para Masculino e F para Feminino): ")
+    comando = f'INSERT INTO alunos (nome, telefone, email, sexo) VALUES ("{nome_aluno}", "{telefone_aluno}", "{email_aluno}", "{sexo_aluno}")' # Comando SQL - Para VALUES de uma variavel precisa colocar o {} e, se esse valor da variavel seja string, precisa colocar "".
+    
+    cursor.execute(comando) # Para executar o comando/script no db.
+    conexao.commit() # Caso faca CREATE, EDITE OU DELETE no db.
+    print("Aluno criado com sucesso!")
 
-    def cadastrar_aluno(self, nome, cpf):
-        aluno = Aluno(nome, cpf)
-        self.alunos.append(aluno)
-        print("Aluno cadastrado com sucesso!")
-
-    def remover_aluno(self, cpf):
-        for aluno in self.alunos:
-            if aluno.cpf == cpf:
-                self.alunos.remove(aluno)
-                print("Aluno removido com sucesso!")
-                return
-        print("Aluno não encontrado!")
-
-    def editar_aluno(self, cpf, novo_nome):
-        for aluno in self.alunos:
-            if aluno.cpf == cpf:
-                aluno.nome = novo_nome
-                print("Dados do aluno atualizados com sucesso!")
-                return
-        print("Aluno não encontrado!")
-
-    def listar_alunos(self):
-        print("Lista de alunos:")
-        for aluno in self.alunos:
-            print(f"Nome: {aluno.nome}, CPF: {aluno.cpf}")
-
-def exibir_menu():
-    print("Escolha uma opção:")
-    print("1 - Cadastrar Aluno")
-    print("2 - Remover Aluno")
-    print("3 - Editar Aluno")
-    print("4 - Listar Alunos")
-    print("5 - Sair")
-
-gerenciador = GerenciadorAlunos()
-
-def cadastrar_aluno():
-    print("Opção selecionada: Cadastrar Aluno")
-    nome = input("Digite o nome do aluno: ")
-    cpf = input("Digite o CPF do aluno: ")
-    gerenciador.cadastrar_aluno(nome, cpf)
-
-def remover_aluno():
-    print("Opção selecionada: Remover Aluno")
-    cpf = input("Digite o CPF do aluno que deseja remover: ")
-    gerenciador.remover_aluno(cpf)
-
-def editar_aluno():
-    print("Opção selecionada: Editar Aluno")
-    cpf = input("Digite o CPF do aluno que deseja editar: ")
-    novo_nome = input("Digite o novo nome do aluno: ")
-    gerenciador.editar_aluno(cpf, novo_nome)
-
+# Script READ
 def listar_alunos():
-    print("Opção selecionada: Listar Alunos")
-    gerenciador.listar_alunos()
+    comando = 'SELECT * FROM alunos' # Comando SQL - Apenas ler uma tabela.
+    cursor.execute(comando) # Para executar o comando/script no db.
+    resultado = cursor.fetchall() # Apenas LEITURA no db.
+    
+    # Converter resultado para DataFrame do pandas
+    df = pd.DataFrame(resultado, columns=['id_aluno', 'nome', 'telefone', 'email', 'sexo'])
+    # Imprimir tabela
+    print(df)
 
-def sair_menu():
-    sys.exit()
+# Script UPDATE
+def atualizar_alunos():
+    listar_alunos()
+    id_aluno = input("Informe o ID do aluno que deseja editar: ")
+    alteracao_valor = input("Qual informação você deseja atualizar (nome, telefone, email, sexo): ")
+    novo_valor = input("Informe o novo valor: ")
 
-# Exemplo de uso do menu
-while True:
-    exibir_menu()
-    opcao = input("Digite o número da opção desejada: ")
-
-    if opcao == "1":
-        cadastrar_aluno()
-    elif opcao == "2":
-        remover_aluno()
-    elif opcao == "3":
-        editar_aluno()
-    elif opcao == "4":
-        listar_alunos()
-    elif opcao == "5":
-        sair_menu()
+    # Verificar a coluna escolhida e construir o comando SQL correspondente
+    if alteracao_valor == "nome":
+        comando = f'UPDATE alunos SET nome = "{novo_valor}" WHERE id_aluno = {id_aluno}'
+    elif alteracao_valor == "telefone":
+        comando = f'UPDATE alunos SET telefone = "{novo_valor}" WHERE id_aluno = {id_aluno}'
+    elif alteracao_valor == "email":
+        comando = f'UPDATE alunos SET email = "{novo_valor}" WHERE id_aluno = {id_aluno}'
+    elif alteracao_valor == "sexo":
+        comando = f'UPDATE alunos SET sexo = "{novo_valor}" WHERE id_aluno = {id_aluno}'
     else:
-        print("Opção inválida. Digite novamente.")
+        print("Coluna inválida. Operação de atualização cancelada.")
+        exit()
+
+    cursor.execute(comando) # Para executar o comando/script no db.
+    conexao.commit() # Para CREATE, UPDATE OU DELETE no db.
+    print("ALteração realizada com sucesso!")
+
+# Script CREATE
+def deletar_alunos():
+    listar_alunos()
+    id_aluno = input("Informe o ID do aluno que deseja editar: ")
+    comando = f'DELETE FROM alunos WHERE id_aluno = {id_aluno}' # Comando SQL - Para VALUES de uma variavel precisa colocar o {} e, se esse valor da variavel seja string, precisa colocar "".
+    cursor.execute(comando) # Para executar o comando/script no db.
+    conexao.commit() # Caso faca CREATE, EDITE OU DELETE no db.
+    print("Aluno deletado com sucesso!")
+
+# Sempre no final do código, para encerrar a conexão com o banco de dados
+cursor.close()
+conexao.close()
