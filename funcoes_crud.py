@@ -51,7 +51,7 @@ def atualizar_alunos():
     conexao.commit() # Para CREATE, UPDATE OU DELETE no db.
     print("ALteração realizada com sucesso!")
 
-# Script CREATE
+# Script DELETE
 def deletar_alunos():
     listar_alunos()
     id_aluno = input("Informe o ID do aluno que deseja editar: ")
